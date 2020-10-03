@@ -47,27 +47,43 @@ app.get("/login", function (req, res) {
 	res.render("login");
 });
 
+// Post route for Login Page
+app.post("/login", function (req, res) {
+	const username = req.body.username;
+	const password = req.body.password;
+	User.findOne({ email: username }, function (err, foundUser) {
+		if (err) {
+			console.log(err);
+		} else {
+			if (foundUser) {
+				if (foundUser.password === password) {
+					res.render("secrets");
+					console.log("Successfully login");
+				}
+			}
+		}
+	});
+});
+
 // Create routes for Register
 app.get("/register", function (req, res) {
 	res.render("register");
 });
 
-app.post("/register", function(req, res){
-
+app.post("/register", function (req, res) {
 	const user = new User({
 		email: req.body.username,
-		password: req.body.password
+		password: req.body.password,
 	});
 
 	user.save(function (err) {
 		if (!err) {
 			res.redirect("/login");
 			console.log("Successfully registered");
-		}else{
+		} else {
 			console.log(err);
 		}
 	});
-
 });
 
 // Port listener
