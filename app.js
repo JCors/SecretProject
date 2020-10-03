@@ -4,6 +4,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
+const encrypt = require(`mongoose-encryption`);
 
 const app = express();
 
@@ -29,10 +30,14 @@ mongoose.connect("mongodb://localhost:27017/secretDB", {
 });
 
 // Create Schema for the Database
-const userSchema = {
+const userSchema = new mongoose.Schema({
 	email: String,
-	password: String,
-};
+	password: String
+});
+
+// pass in a single secret string instead of two keys.
+const secret = "ThisIsoutLittlePassword";
+userSchema.plugin(encrypt, { secret: secret , encryptedFields: ['password']});
 
 // Create Model for the User Schema
 const User = mongoose.model("User", userSchema);
