@@ -23,32 +23,51 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
 // Connect to the Database
-// mongoose.connect("mongodb://localhost:27017/secretDB", {
-// 	useNewUrlParser: true,
-// 	useUnifiedTopology: true,
-// });
+mongoose.connect("mongodb://localhost:27017/secretDB", {
+	useNewUrlParser: true,
+	useUnifiedTopology: true,
+});
 
 // Create Schema for the Database
-// const articleSchema = {
-// 	title: String,
-// 	content: String,
-// };
+const userSchema = {
+	email: String,
+	password: String,
+};
 
-// Create Model for the Article Schema
-// const Article = mongoose.model("Article", articleSchema);
+// Create Model for the User Schema
+const User = mongoose.model("User", userSchema);
 
 // Create routes for Home
-
 app.get("/", function (req, res) {
-	res.send("home");
+	res.render("home");
 });
 
+// Create routes for Login Page
 app.get("/login", function (req, res) {
-	res.send("login");
+	res.render("login");
 });
 
+// Create routes for Register
 app.get("/register", function (req, res) {
-	res.send("register");
+	res.render("register");
+});
+
+app.post("/register", function(req, res){
+
+	const user = new User({
+		email: req.body.username,
+		password: req.body.password
+	});
+
+	user.save(function (err) {
+		if (!err) {
+			res.redirect("/login");
+			console.log("Successfully registered");
+		}else{
+			console.log(err);
+		}
+	});
+
 });
 
 // Port listener
