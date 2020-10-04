@@ -4,7 +4,10 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const encrypt = require(`mongoose-encryption`);
+const bcrypt = require("bcrypt");
+// const encrypt = require(`mongoose-encryption`);
+// const md5 = require("md5");
+const saltRounds = 10;
 
 const app = express();
 
@@ -32,11 +35,11 @@ mongoose.connect("mongodb://localhost:27017/secretDB", {
 // Create Schema for the Database
 const userSchema = new mongoose.Schema({
 	email: String,
-	password: String
+	password: String,
 });
 
-// pass in a single secret string instead of two keys.
-userSchema.plugin(encrypt, { secret: process.env.SECRET , encryptedFields: ['password']});
+// // pass in a single secret string instead of two keys.
+// userSchema.plugin(encrypt, { secret: process.env.SECRET , encryptedFields: ['password']});
 
 // Create Model for the User Schema
 const User = mongoose.model("User", userSchema);
@@ -53,17 +56,23 @@ app.get("/login", function (req, res) {
 
 // Post route for Login Page
 app.post("/login", function (req, res) {
+	// Load hash from your password DB.
 	const username = req.body.username;
-	const password = req.body.password;
+
 	User.findOne({ email: username }, function (err, foundUser) {
 		if (err) {
 			console.log(err);
 		} else {
 			if (foundUser) {
-				if (foundUser.password === password) {
-					res.render("secrets");
-					console.log("Successfully login");
-				}
+				bcrypt.compare(req.body.password, foundUser.password, function (
+					err,
+					result
+				) {
+					if (result) {
+						res.render("secrets");
+						console.log("Successfully login");
+					}
+				});
 			}
 		}
 	});
@@ -75,18 +84,20 @@ app.get("/register", function (req, res) {
 });
 
 app.post("/register", function (req, res) {
-	const user = new User({
-		email: req.body.username,
-		password: req.body.password,
-	});
+	bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
+		const user = new User({
+			email: req.body.username,
+			password: hash,
+		});
 
-	user.save(function (err) {
-		if (!err) {
-			res.redirect("/login");
-			console.log("Successfully registered");
-		} else {
-			console.log(err);
-		}
+		user.save(function (err) {
+			if (!err) {
+				res.redirect("/login");
+				console.log("Successfully registered");
+			} else {
+				console.log(err);
+			}
+		});
 	});
 });
 
